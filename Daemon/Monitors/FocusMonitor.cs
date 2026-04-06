@@ -2,11 +2,14 @@
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Text;
+using Daemon.Abstractions;
 
 namespace Daemon.Monitors
 {
-    internal class FocusMonitor
+    internal class FocusMonitor: IMonitor
     {
+        public string Name => "FocusMonitor";
+
         private const string ExamWindowTitle = "OEIMS Exam";
 
         [DllImport("user32.dll")]
@@ -27,5 +30,18 @@ namespace Daemon.Monitors
         {
             return GetForegroundWindowTitle().Contains(ExamWindowTitle);
         }
+
+        public async Task StartAsync(Func<MonitorEvent, Task> onEvent, CancellationToken ct)
+        {
+            while (!ct.IsCancellationRequested)
+            {
+                if (!IsExamWindowFocused())
+                    await onEvent(new MonitorEvent(Name, $"Focus lost: {GetForegroundWindowTitle()}", Severity.Warning));
+
+                await Task.Delay(1000, ct);
+            }
+        }
+
+        public void Dispose() { }
     }
 }

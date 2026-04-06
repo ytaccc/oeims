@@ -4,8 +4,10 @@ namespace Daemon.Monitors
 {
     internal record ActiveInterface(string Id, string Name);
 
-    internal class NetworkMonitor
+    internal class NetworkMonitor: IMonitor
     {
+        public string Name => "NetworkMonitor";
+
         private string? _initialNetworkId;
         private HashSet<ActiveInterface> _initialInterfaces = [];
 
@@ -24,6 +26,36 @@ namespace Daemon.Monitors
             NetworkInterfaceType.Wwanpp2,
             NetworkInterfaceType.Wman
         ];
+
+        public async Task WaitUntilReadyAsync(Func<MonitorEvent, Task> onEvent, CancellationToken ct)
+        {
+            while (!IsValidNetworkState())
+            {
+                await onEvent(new MonitorEvent(Name, "Invalid network state, waiting...", Severity.Warning));
+                await Task.Delay(5000, ct);
+            }
+            InitializeBaseline();
+        }
+
+        public async Task StartAsync(Func<MonitorEvent, Task> onEvent, CancellationToken ct)
+        {
+            while (!ct.IsCancellationRequested)
+            {
+                if (HasNetworkChanged())
+                    await onEvent(new MonitorEvent(Name, "Network change detected!", Severity.Warning));
+
+                if (HasMultipleInterfaces())
+                    await onEvent(new MonitorEvent(Name, "Suspicious interfaces detected!", Severity.Warning));
+
+                if (HasMultipleActiveNetworks())
+                    await onEvent(new MonitorEvent(Name, "Multiple active networks detected!", Severity.Warning));
+
+                if (HasNoActiveNetworks())
+                    await onEvent(new MonitorEvent(Name, "No active network detected!", Severity.Warning));
+
+                await Task.Delay(1000, ct);
+            }
+        }
 
         public bool HasNetworkChanged()
         {
