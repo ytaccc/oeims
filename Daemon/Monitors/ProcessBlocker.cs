@@ -24,7 +24,7 @@ namespace Daemon.Monitors
 
         private const string RegistryPath = @"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\";
 
-        public Task ApplyAsync(CancellationToken ct)
+        public void Apply()
         {
             foreach (var location in _scanLocations)
             {
@@ -40,7 +40,6 @@ namespace Daemon.Monitors
                     }
                 }
             }
-            return Task.CompletedTask;
         }
 
         private void BlockExecutable(string path)

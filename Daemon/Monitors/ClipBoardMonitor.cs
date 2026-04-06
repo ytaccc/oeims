@@ -3,7 +3,7 @@ using Daemon.Abstractions;
 
 namespace Daemon.Monitors
 {
-    internal class ClipboardMonitor: IMitigator
+    internal class ClipboardMonitor : IMitigator
     {
         public string Name => "ClipboardMonitor";
 
@@ -13,17 +13,14 @@ namespace Daemon.Monitors
         [DllImport("user32.dll")]
         private static extern bool CloseClipboard();
 
-
-        public Task ApplyAsync(CancellationToken ct)
+        public void Apply()
         {
             OpenClipboard(IntPtr.Zero);
-            return Task.CompletedTask;
         }
 
         public void Dispose()
         {
             CloseClipboard();
         }
-
     }
 }

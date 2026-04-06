@@ -1,4 +1,5 @@
 ﻿using System.Net.NetworkInformation;
+using Daemon.Abstractions;
 
 namespace Daemon.Monitors
 {
@@ -27,7 +28,7 @@ namespace Daemon.Monitors
             NetworkInterfaceType.Wman
         ];
 
-        public async Task WaitUntilReadyAsync(Func<MonitorEvent, Task> onEvent, CancellationToken ct)
+        public async Task StartAsync(Func<MonitorEvent, Task> onEvent, CancellationToken ct)
         {
             while (!IsValidNetworkState())
             {
@@ -35,10 +36,7 @@ namespace Daemon.Monitors
                 await Task.Delay(5000, ct);
             }
             InitializeBaseline();
-        }
 
-        public async Task StartAsync(Func<MonitorEvent, Task> onEvent, CancellationToken ct)
-        {
             while (!ct.IsCancellationRequested)
             {
                 if (HasNetworkChanged())
@@ -125,5 +123,7 @@ namespace Daemon.Monitors
                 .Select( n => new ActiveInterface(n.Id, n.Name))
                 .ToHashSet();
         }
+
+        public void Dispose() { }
     }
 }
