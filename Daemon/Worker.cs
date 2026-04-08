@@ -34,5 +34,16 @@ namespace Daemon
 
             await Task.WhenAll(_monitors.Select(m => m.StartAsync(OnEvent, stoppingToken)));
         }
+
+        public override void Dispose()
+        {
+            foreach (var mitigator in _mitigators)
+                mitigator.Dispose();
+
+            foreach (var monitor in _monitors)
+                monitor.Dispose();
+
+            base.Dispose();
+        }
     }
 }
