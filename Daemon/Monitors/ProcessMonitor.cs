@@ -39,17 +39,22 @@ namespace Daemon.Monitors
         {
             _watcher?.Start();
 
-            while (!ct.IsCancellationRequested)
+            try
             {
-                var killed = KillForbiddenProcesses();
-                foreach (var process in killed)
+                while (!ct.IsCancellationRequested)
                 {
-                    await onEvent(new MonitorEvent(Name, $"Forbidden process killed: {process}", Severity.Warning));
+                    var killed = KillForbiddenProcesses();
+                    foreach (var process in killed)
+                    {
+                        await onEvent(new MonitorEvent(Name, $"Forbidden process killed: {process}", Severity.Warning));
+                    }
+                    await Task.Delay(1000, ct);
                 }
-                await Task.Delay(1000, ct);
             }
-
-            _watcher?.Stop();
+            finally
+            {
+                _watcher?.Stop();
+            }
         }
 
         private IEnumerable<string> KillForbiddenProcesses()

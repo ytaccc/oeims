@@ -107,7 +107,7 @@ namespace Daemon.Monitors
                         }
                         else
                         {
-                            Thread.Sleep(10);
+                            ct.WaitHandle.WaitOne(100);
                         }
                     }
                 }

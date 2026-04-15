@@ -22,7 +22,21 @@ namespace Daemon
         {
             Task OnEvent(MonitorEvent e)
             {
-                logger.LogWarning("[{monitor}] {message}", e.MonitorName, e.Message);
+                switch (e.Severity)
+                {
+                    case MonitorEventSeverity.Information:
+                        logger.LogInformation("[{monitor}] {message}", e.MonitorName, e.Message);
+                        break;
+                    case MonitorEventSeverity.Warning:
+                        logger.LogWarning("[{monitor}] {message}", e.MonitorName, e.Message);
+                        break;
+                    case MonitorEventSeverity.Critical:
+                        logger.LogCritical("[{monitor}] {message}", e.MonitorName, e.Message);
+                        break;
+                    default:
+                        logger.LogWarning("[{monitor}] {message}", e.MonitorName, e.Message);
+                        break;
+                }
                 return Task.CompletedTask;
             }
 
