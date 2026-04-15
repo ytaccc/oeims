@@ -1,9 +1,17 @@
-﻿using System.Net.NetworkInformation;
+using System.Net.NetworkInformation;
 using Daemon.Abstractions;
 
 namespace Daemon.Monitors
 {
     internal record ActiveInterface(string Id, string Name);
+
+    internal enum NetworkEvent
+    {
+        NetworkChanged,
+        MultipleInterfacesDetected,
+        MultipleActiveNetworksDetected,
+        NoActiveNetworkDetected,
+    }
 
     internal class NetworkMonitor : IMonitor
     {
@@ -28,71 +36,51 @@ namespace Daemon.Monitors
             NetworkInterfaceType.Wman
         ];
 
-        public async Task StartAsync(Func<MonitorEvent, Task> onEvent, CancellationToken ct)
+        public event Action? NetworkChanged;
+        public event Action<NetworkEvent>? NetworkViolationDetected;
+
+        public void Start()
         {
-            NetworkAddressChangedEventHandler onAddressChanged = async (_, _) =>
-            {
-                try
-                {
-                    await CheckNetworkViolation(onEvent);
-                }
-                catch
-                {
-                }
-            };
-            NetworkAvailabilityChangedEventHandler onAvailabilityChanged = async (_, _) =>
-            {
-                try
-                {
-                    await CheckNetworkViolation(onEvent);
-                }
-                catch
-                {
-                }
-            };
-
-            try
-            {
-                while (!IsValidNetworkState())
-                {
-                    await onEvent(new MonitorEvent(Name, "Invalid network state, waiting...", Severity.Warning));
-                    await Task.Delay(5000, ct);
-                }
-
-                if (ct.IsCancellationRequested)
-                    return;
-
-                InitializeBaseline();
-
-                NetworkChange.NetworkAddressChanged += onAddressChanged;
-                NetworkChange.NetworkAvailabilityChanged += onAvailabilityChanged;
-
-                await Task.Delay(Timeout.Infinite, ct);
-            }
-            catch (OperationCanceledException) when (ct.IsCancellationRequested)
-            {
-                return;
-            }
-            finally
-            {
-                NetworkChange.NetworkAddressChanged -= onAddressChanged;
-                NetworkChange.NetworkAvailabilityChanged -= onAvailabilityChanged;
-            }
+            NetworkChange.NetworkAddressChanged += OnNetworkAddressChanged;
+            NetworkChange.NetworkAvailabilityChanged += OnNetworkAvailabilityChanged;
         }
 
-        private async Task CheckNetworkViolation(Func<MonitorEvent, Task> onEvent)
+        public void Stop()
+        {
+            NetworkChange.NetworkAddressChanged -= OnNetworkAddressChanged;
+            NetworkChange.NetworkAvailabilityChanged -= OnNetworkAvailabilityChanged;
+        }
+
+        private void OnNetworkAddressChanged(object? sender, EventArgs e)
+        {
+            HandleNetworkChange();
+        }
+
+        private void OnNetworkAvailabilityChanged(object? sender, NetworkAvailabilityEventArgs e)
+        {
+            HandleNetworkChange();
+        }
+
+        private void HandleNetworkChange()
+        {
+            NetworkChanged?.Invoke();
+            CheckNetworkViolation();
+        }
+
+        private void CheckNetworkViolation()
         {
             if (HasNetworkChanged())
-                await onEvent(new MonitorEvent(Name, "Network change detected!", Severity.Warning));
+                NetworkViolationDetected?.Invoke(NetworkEvent.NetworkChanged);
 
             if (HasMultipleInterfaces())
-                await onEvent(new MonitorEvent(Name, "Suspicious interfaces detected!", Severity.Warning));
+                NetworkViolationDetected?.Invoke(NetworkEvent.MultipleInterfacesDetected);
 
             if (HasMultipleActiveNetworks())
-                await onEvent(new MonitorEvent(Name, "Multiple active networks detected!", Severity.Warning));
+                NetworkViolationDetected?.Invoke(NetworkEvent.MultipleActiveNetworksDetected);
 
             if (HasNoActiveNetworks())
-                await onEvent(new MonitorEvent(Name, "No active network detected!", Severity.Warning));
+                NetworkViolationDetected?.Invoke(NetworkEvent.NoActiveNetworkDetected);
+
         }
 
         public bool HasNetworkChanged()

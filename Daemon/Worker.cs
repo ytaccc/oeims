@@ -18,46 +18,100 @@ namespace Daemon
             new ProcessBlocker(),
         ];
 
+        private readonly TaskCompletionSource _tcs = new TaskCompletionSource();
+
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            Task OnEvent(MonitorEvent e)
-            {
-                switch (e.Severity)
-                {
-                    case Severity.Info:
-                        logger.LogInformation("[{monitor}] {message}", e.MonitorName, e.Message);
-                        break;
-                    case Severity.Warning:
-                        logger.LogWarning("[{monitor}] {message}", e.MonitorName, e.Message);
-                        break;
-                    case Severity.Critical:
-                        logger.LogCritical("[{monitor}] {message}", e.MonitorName, e.Message);
-                        break;
-                    default:
-                        logger.LogWarning("[{monitor}] {message}", e.MonitorName, e.Message);
-                        break;
-                }
-                return Task.CompletedTask;
-            }
+            using var clipboardMonitor = new ClipboardMonitor();
+            clipboardMonitor.BlockClipboard();
 
-            foreach (var mitigator in _mitigators)
-            {
-                mitigator.Apply();
-                logger.LogInformation("Mitigator applied: {name}", mitigator.Name);
-            }
+            _networkMonitor.Start();
 
-            await Task.WhenAll(_monitors.Select(m => m.StartAsync(OnEvent, stoppingToken)));
+            try
+            {
+                await WaitForValidNetwork(stoppingToken);
+
+                _networkMonitor.InitializeBaseline();
+                SubscribeEvents();
+
+                await WaitForShutdown(stoppingToken);
+            }
+            finally
+            {
+                UnsubscribeEvents();
+                _networkMonitor.Stop();
+            }
         }
 
-        public override void Dispose()
+        private async Task WaitForValidNetwork(CancellationToken stoppingToken)
         {
-            foreach (var mitigator in _mitigators)
-                mitigator.Dispose();
+            if (_networkMonitor.IsValidNetworkState())
+            {
+                logger.LogInformation("Valid network state. Proceeding...");
+                return;
+            }
 
-            foreach (var monitor in _monitors)
-                monitor.Dispose();
+            logger.LogWarning("Invalid network state. Guarantee only one physical network connected. Waiting...");
 
-            base.Dispose();
+            _networkMonitor.NetworkChanged += OnNetworkChange;
+
+            try
+            {
+                await _tcs.Task.WaitAsync(stoppingToken);
+            }
+            finally
+            {
+                _networkMonitor.NetworkChanged -= OnNetworkChange;
+            }
+        }
+
+        private void OnNetworkViolationDetected(NetworkEvent eventType)
+        {
+            switch (eventType)
+            {
+                case NetworkEvent.NetworkChanged:
+                    logger.LogWarning("Network change detected!");
+                    break;
+
+                case NetworkEvent.MultipleInterfacesDetected:
+                    logger.LogWarning("Suspicious interfaces detected!");
+                    break;
+
+                case NetworkEvent.MultipleActiveNetworksDetected:
+                    logger.LogWarning("Multiple active networks detected!");
+                    break;
+
+                case NetworkEvent.NoActiveNetworkDetected:
+                    logger.LogWarning("No active network detected!");
+                    break;
+            }
+        }
+
+        private void OnNetworkChange()
+        {
+            if (!_networkMonitor.IsValidNetworkState())
+            {
+                logger.LogWarning("Invalid network state. Guarantee only one physical network connected. Waiting...");
+                return;
+            }
+
+            logger.LogInformation("Valid network state. Proceeding...");
+            _tcs.TrySetResult();
+        }
+
+        private static async Task WaitForShutdown(CancellationToken stoppingToken)
+        {
+            await Task.Delay(Timeout.Infinite, stoppingToken);
+        }
+
+        private void SubscribeEvents()
+        {
+            _networkMonitor.NetworkViolationDetected += OnNetworkViolationDetected;
+        }
+
+        private void UnsubscribeEvents()
+        {
+            _networkMonitor.NetworkViolationDetected -= OnNetworkViolationDetected;
         }
     }
 }
