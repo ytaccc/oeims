@@ -30,12 +30,30 @@ namespace Daemon.Monitors
 
         public async Task StartAsync(Func<MonitorEvent, Task> onEvent, CancellationToken ct)
         {
-            NetworkAddressChangedEventHandler onAddressChanged = (_, _) => CheckNetworkViolation(onEvent);
-            NetworkAvailabilityChangedEventHandler onAvailabilityChanged = (_, _) => CheckNetworkViolation(onEvent);
+            NetworkAddressChangedEventHandler onAddressChanged = async (_, _) =>
+            {
+                try
+                {
+                    await CheckNetworkViolation(onEvent);
+                }
+                catch
+                {
+                }
+            };
+            NetworkAvailabilityChangedEventHandler onAvailabilityChanged = async (_, _) =>
+            {
+                try
+                {
+                    await CheckNetworkViolation(onEvent);
+                }
+                catch
+                {
+                }
+            };
 
             try
             {
-                while (!ct.IsCancellationRequested && !IsValidNetworkState())
+                while (!IsValidNetworkState())
                 {
                     await onEvent(new MonitorEvent(Name, "Invalid network state, waiting...", Severity.Warning));
                     await Task.Delay(5000, ct);
@@ -62,19 +80,19 @@ namespace Daemon.Monitors
             }
         }
 
-        private void CheckNetworkViolation(Func<MonitorEvent, Task> onEvent)
+        private async Task CheckNetworkViolation(Func<MonitorEvent, Task> onEvent)
         {
             if (HasNetworkChanged())
-                onEvent(new MonitorEvent(Name, "Network change detected!", Severity.Warning)).GetAwaiter().GetResult();
+                await onEvent(new MonitorEvent(Name, "Network change detected!", Severity.Warning));
 
             if (HasMultipleInterfaces())
-                onEvent(new MonitorEvent(Name, "Suspicious interfaces detected!", Severity.Warning)).GetAwaiter().GetResult();
+                await onEvent(new MonitorEvent(Name, "Suspicious interfaces detected!", Severity.Warning));
 
             if (HasMultipleActiveNetworks())
-                onEvent(new MonitorEvent(Name, "Multiple active networks detected!", Severity.Warning)).GetAwaiter().GetResult();
+                await onEvent(new MonitorEvent(Name, "Multiple active networks detected!", Severity.Warning));
 
             if (HasNoActiveNetworks())
-                onEvent(new MonitorEvent(Name, "No active network detected!", Severity.Warning)).GetAwaiter().GetResult();
+                await onEvent(new MonitorEvent(Name, "No active network detected!", Severity.Warning));
         }
 
         public bool HasNetworkChanged()
