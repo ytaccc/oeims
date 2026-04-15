@@ -5,14 +5,6 @@ namespace Daemon.Monitors
 {
     internal record ActiveInterface(string Id, string Name);
 
-    internal enum NetworkEvent
-    {
-        NetworkChanged,
-        MultipleInterfacesDetected,
-        MultipleActiveNetworksDetected,
-        NoActiveNetworkDetected,
-    }
-
     internal class NetworkMonitor : IMonitor
     {
         public string Name => "NetworkMonitor";
@@ -38,8 +30,8 @@ namespace Daemon.Monitors
 
         public async Task StartAsync(Func<MonitorEvent, Task> onEvent, CancellationToken ct)
         {
-            NetworkAddressChangedEventHandler onAddressChanged = (_, _) => _ = CheckNetworkViolation(onEvent);
-            NetworkAvailabilityChangedEventHandler onAvailabilityChanged = (_, _) => _ = CheckNetworkViolation(onEvent);
+            NetworkAddressChangedEventHandler onAddressChanged = (_, _) => CheckNetworkViolation(onEvent);
+            NetworkAvailabilityChangedEventHandler onAvailabilityChanged = (_, _) => CheckNetworkViolation(onEvent);
 
             try
             {
@@ -70,19 +62,19 @@ namespace Daemon.Monitors
             }
         }
 
-        private async Task CheckNetworkViolation(Func<MonitorEvent, Task> onEvent)
+        private void CheckNetworkViolation(Func<MonitorEvent, Task> onEvent)
         {
             if (HasNetworkChanged())
-                await onEvent(new MonitorEvent(Name, "Network change detected!", Severity.Warning));
+                onEvent(new MonitorEvent(Name, "Network change detected!", Severity.Warning)).GetAwaiter().GetResult();
 
             if (HasMultipleInterfaces())
-                await onEvent(new MonitorEvent(Name, "Suspicious interfaces detected!", Severity.Warning));
+                onEvent(new MonitorEvent(Name, "Suspicious interfaces detected!", Severity.Warning)).GetAwaiter().GetResult();
 
             if (HasMultipleActiveNetworks())
-                await onEvent(new MonitorEvent(Name, "Multiple active networks detected!", Severity.Warning));
+                onEvent(new MonitorEvent(Name, "Multiple active networks detected!", Severity.Warning)).GetAwaiter().GetResult();
 
             if (HasNoActiveNetworks())
-                await onEvent(new MonitorEvent(Name, "No active network detected!", Severity.Warning));
+                onEvent(new MonitorEvent(Name, "No active network detected!", Severity.Warning)).GetAwaiter().GetResult();
         }
 
         public bool HasNetworkChanged()
