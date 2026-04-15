@@ -51,6 +51,10 @@ namespace Daemon.Monitors
                     await Task.Delay(1000, ct);
                 }
             }
+            catch (OperationCanceledException) when (ct.IsCancellationRequested)
+            {
+                return;
+            }
             finally
             {
                 _watcher?.Stop();

@@ -24,13 +24,13 @@ namespace Daemon
             {
                 switch (e.Severity)
                 {
-                    case MonitorEventSeverity.Information:
+                    case Severity.Info:
                         logger.LogInformation("[{monitor}] {message}", e.MonitorName, e.Message);
                         break;
-                    case MonitorEventSeverity.Warning:
+                    case Severity.Warning:
                         logger.LogWarning("[{monitor}] {message}", e.MonitorName, e.Message);
                         break;
-                    case MonitorEventSeverity.Critical:
+                    case Severity.Critical:
                         logger.LogCritical("[{monitor}] {message}", e.MonitorName, e.Message);
                         break;
                     default:

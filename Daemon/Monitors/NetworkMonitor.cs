@@ -5,7 +5,15 @@ namespace Daemon.Monitors
 {
     internal record ActiveInterface(string Id, string Name);
 
-    internal class NetworkMonitor: IMonitor
+    internal enum NetworkEvent
+    {
+        NetworkChanged,
+        MultipleInterfacesDetected,
+        MultipleActiveNetworksDetected,
+        NoActiveNetworkDetected,
+    }
+
+    internal class NetworkMonitor : IMonitor
     {
         public string Name => "NetworkMonitor";
 
@@ -30,13 +38,13 @@ namespace Daemon.Monitors
 
         public async Task StartAsync(Func<MonitorEvent, Task> onEvent, CancellationToken ct)
         {
+            NetworkAddressChangedEventHandler onAddressChanged = (_, _) => _ = CheckNetworkViolation(onEvent);
+            NetworkAvailabilityChangedEventHandler onAvailabilityChanged = (_, _) => _ = CheckNetworkViolation(onEvent);
+
             try
             {
                 while (!ct.IsCancellationRequested && !IsValidNetworkState())
                 {
-                    if (ct.IsCancellationRequested)
-                        return;
-
                     await onEvent(new MonitorEvent(Name, "Invalid network state, waiting...", Severity.Warning));
                     await Task.Delay(5000, ct);
                 }
@@ -46,27 +54,35 @@ namespace Daemon.Monitors
 
                 InitializeBaseline();
 
-                while (!ct.IsCancellationRequested)
-                {
-                    if (HasNetworkChanged())
-                        await onEvent(new MonitorEvent(Name, "Network change detected!", Severity.Warning));
+                NetworkChange.NetworkAddressChanged += onAddressChanged;
+                NetworkChange.NetworkAvailabilityChanged += onAvailabilityChanged;
 
-                    if (HasMultipleInterfaces())
-                        await onEvent(new MonitorEvent(Name, "Suspicious interfaces detected!", Severity.Warning));
-
-                    if (HasMultipleActiveNetworks())
-                        await onEvent(new MonitorEvent(Name, "Multiple active networks detected!", Severity.Warning));
-
-                    if (HasNoActiveNetworks())
-                        await onEvent(new MonitorEvent(Name, "No active network detected!", Severity.Warning));
-
-                    await Task.Delay(1000, ct);
-                }
+                await Task.Delay(Timeout.Infinite, ct);
             }
             catch (OperationCanceledException) when (ct.IsCancellationRequested)
             {
                 return;
             }
+            finally
+            {
+                NetworkChange.NetworkAddressChanged -= onAddressChanged;
+                NetworkChange.NetworkAvailabilityChanged -= onAvailabilityChanged;
+            }
+        }
+
+        private async Task CheckNetworkViolation(Func<MonitorEvent, Task> onEvent)
+        {
+            if (HasNetworkChanged())
+                await onEvent(new MonitorEvent(Name, "Network change detected!", Severity.Warning));
+
+            if (HasMultipleInterfaces())
+                await onEvent(new MonitorEvent(Name, "Suspicious interfaces detected!", Severity.Warning));
+
+            if (HasMultipleActiveNetworks())
+                await onEvent(new MonitorEvent(Name, "Multiple active networks detected!", Severity.Warning));
+
+            if (HasNoActiveNetworks())
+                await onEvent(new MonitorEvent(Name, "No active network detected!", Severity.Warning));
         }
 
         public bool HasNetworkChanged()
