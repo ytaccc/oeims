@@ -24,7 +24,8 @@ builder.Services.AddHttpClient<HeartbeatSender>();
 
 builder.Services.AddHostedService<Worker>();
 
-builder.Logging.AddEventLog();
+if (OperatingSystem.IsWindows())
+    builder.Logging.AddEventLog();
 
 var host = builder.Build();
 host.Run();

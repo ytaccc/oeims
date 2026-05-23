@@ -6,6 +6,7 @@ import com.oeims.websocket.IConnectionRegistry
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.slf4j.LoggerFactory
 import java.time.Instant
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -14,12 +15,17 @@ class HeartbeatService(
     private val connectionRegistry: IConnectionRegistry,
     private val config: HeartbeatConfig
 ) {
+    private val logger = LoggerFactory.getLogger(HeartbeatService::class.java)
 
     fun start(scope: CoroutineScope) {
         scope.launch {
             while (true) {
                 delay(config.intervalMs.milliseconds)
-                checkHeartbeats()
+                try {
+                    checkHeartbeats()
+                } catch (e: Throwable) {
+                    logger.warn("Heartbeat sweep failed", e)
+                }
             }
         }
     }
