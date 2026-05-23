@@ -28,12 +28,10 @@ export function useSessionWs(
         } else if ('connectionStatus' in msg) {
           cbRef.current.onStatusUpdate(msg as unknown as ParticipantStatusUpdate);
         }
-      } catch {
-        // ignore malformed messages
-      }
+      } catch { /* ignore malformed frames */ }
     };
 
-    ws.onerror = () => console.warn('Session WebSocket error — will retry on reconnect');
+    ws.onerror = () => console.warn('Session WebSocket error');
 
     return () => ws.close();
   }, [sessionId, token]);

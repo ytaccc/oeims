@@ -1,16 +1,11 @@
 import { apiFetch } from './client';
 import type { ExamResponse } from '../types';
 
-export function getExams(token: string): Promise<ExamResponse[]> {
-  return apiFetch<ExamResponse[]>('/exams', {}, token);
-}
+export const getExams = (token: string): Promise<ExamResponse[]> =>
+  apiFetch<ExamResponse[]>('/exams', {}, token);
 
-export function createExam(
+export const createExam = (
   token: string,
   payload: { title: string; description?: string; durationMins: number }
-): Promise<ExamResponse> {
-  return apiFetch<ExamResponse>('/exams', {
-    method: 'POST',
-    body: JSON.stringify(payload),
-  }, token);
-}
+): Promise<ExamResponse> =>
+  apiFetch<ExamResponse>('/exams', { method: 'POST', body: JSON.stringify(payload) }, token);

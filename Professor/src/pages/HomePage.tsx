@@ -13,14 +13,12 @@ export function HomePage() {
   const [exams, setExams] = useState<ExamResponse[]>([]);
   const [examsLoading, setExamsLoading] = useState(true);
 
-  // Create exam form state
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [duration, setDuration] = useState('');
   const [createLoading, setCreateLoading] = useState(false);
   const [createError, setCreateError] = useState('');
 
-  // Track sessions per exam, persisted so they survive page refreshes.
   const [pendingSessions, setPendingSessions] = useState<Record<string, SessionResponse>>(() => {
     try {
       const stored = localStorage.getItem('oeims_pending_sessions');
@@ -30,6 +28,7 @@ export function HomePage() {
     }
   });
   const [sessionLoading, setSessionLoading] = useState<string | null>(null);
+  const [sessionError, setSessionError] = useState('');
 
   useEffect(() => {
     localStorage.setItem('oeims_pending_sessions', JSON.stringify(pendingSessions));
@@ -42,7 +41,6 @@ export function HomePage() {
       .finally(() => setExamsLoading(false));
   }, [token]);
 
-  // Refresh status of any stored sessions so the badge reflects the real state.
   useEffect(() => {
     const entries = Object.entries(pendingSessions);
     if (entries.length === 0) return;
@@ -79,11 +77,12 @@ export function HomePage() {
 
   const handleCreateSession = async (examId: string) => {
     setSessionLoading(examId);
+    setSessionError('');
     try {
       const session = await createSession(token, examId);
       setPendingSessions(prev => ({ ...prev, [examId]: session }));
     } catch (err) {
-      console.error('Failed to create session:', err);
+      setSessionError(err instanceof Error ? err.message : 'Failed to create session.');
     } finally {
       setSessionLoading(null);
     }
@@ -103,7 +102,6 @@ export function HomePage() {
       </header>
 
       <main className="home-content">
-        {/* Left: Create exam */}
         <section className="panel panel-left">
           <h2>New Exam</h2>
           <form onSubmit={handleCreateExam} className="exam-form">
@@ -146,7 +144,6 @@ export function HomePage() {
           </form>
         </section>
 
-        {/* Right: Exam list */}
         <section className="panel panel-right">
           <h2>Your Exams</h2>
 
@@ -155,6 +152,8 @@ export function HomePage() {
           {!examsLoading && exams.length === 0 && (
             <p className="muted">No exams yet — create one on the left.</p>
           )}
+
+          {sessionError && <p className="error-msg">{sessionError}</p>}
 
           <ul className="exam-list">
             {exams.map(exam => {

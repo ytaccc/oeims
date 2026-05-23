@@ -23,7 +23,6 @@ export function SessionPage() {
   const [actionError, setActionError] = useState('');
   const [error, setError] = useState('');
 
-  // Initial load
   useEffect(() => {
     if (!id) return;
     Promise.all([
@@ -44,7 +43,7 @@ export function SessionPage() {
       .finally(() => setLoading(false));
   }, [id, token]);
 
-  // Poll participants while session is PENDING or ACTIVE (new joiners don't come via WS)
+  // Poll for new joiners — WebSocket only delivers events, not joins
   useEffect(() => {
     if (!id || !session || session.status === 'ENDED') return;
     const interval = setInterval(async () => {
@@ -56,7 +55,6 @@ export function SessionPage() {
     return () => clearInterval(interval);
   }, [id, token, session?.status]);
 
-  // Real-time violation events and connection status updates
   const wsSessionId = session?.status === 'ACTIVE' ? (id ?? null) : null;
 
   useSessionWs(wsSessionId, token, {
