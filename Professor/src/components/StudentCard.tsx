@@ -17,10 +17,10 @@ function badgeClass(count: number) {
   return 'badge-danger';
 }
 
-function severityIcon(s: string) {
-  if (s === 'CRITICAL') return '🔴';
-  if (s === 'WARNING') return '🟡';
-  return '🔵';
+function severityClass(s: string) {
+  if (s === 'CRITICAL') return 'sev-critical';
+  if (s === 'WARNING') return 'sev-warning';
+  return 'sev-info';
 }
 
 function fmtTime(iso: string) {
@@ -37,10 +37,14 @@ export const StudentCard = memo(function StudentCard({ participant, events }: Pr
       ? 'dot-timeout'
       : 'dot-disconnected';
 
+  const statusLabel = participant.connectionStatus === 'TIMED_OUT'
+    ? 'timed out'
+    : participant.connectionStatus.toLowerCase();
+
   return (
     <div className={`student-card ${bc}`}>
       <div className="card-main">
-        <span className={`conn-dot ${dotClass}`} title={participant.connectionStatus} />
+        <span className={`conn-dot ${dotClass}`} />
         <span className="student-email" title={participant.email}>
           {participant.email}
         </span>
@@ -51,31 +55,28 @@ export const StudentCard = memo(function StudentCard({ participant, events }: Pr
         )}
       </div>
 
-      <div className="card-tooltip">
-        <p className="tt-email">{participant.email}</p>
-        <p className="tt-row">
-          Status: <strong>{participant.connectionStatus}</strong>
-        </p>
-        {participant.lastHeartbeat && (
-          <p className="tt-row">Last heartbeat: {fmtTime(participant.lastHeartbeat)}</p>
-        )}
-        <p className="tt-row">Joined: {fmtTime(participant.joinedAt)}</p>
+      <p className="card-status">
+        {statusLabel}
+        {participant.lastHeartbeat && ` · hb ${fmtTime(participant.lastHeartbeat)}`}
+      </p>
 
-        {events.length === 0 ? (
-          <p className="tt-clean">No violations</p>
-        ) : (
-          <ul className="tt-violations">
+      {events.length > 0 && (
+        <>
+          <div className="card-divider" />
+          <ul className="card-events">
             {events.map(ev => (
-              <li key={ev.id} className="tt-event">
-                <span className="te-icon">{severityIcon(ev.severity)}</span>
-                <span className="te-monitor">[{ev.monitorName}]</span>
-                <span className="te-msg">{ev.message}</span>
-                <span className="te-time">{fmtTime(ev.occurredAt)}</span>
+              <li key={ev.id} className="card-event">
+                <div className="ce-header">
+                  <span className={`ce-sev ${severityClass(ev.severity)}`} />
+                  <span className="ce-monitor">{ev.monitorName}</span>
+                  <span className="ce-time">{fmtTime(ev.occurredAt)}</span>
+                </div>
+                <p className="ce-msg">{ev.message}</p>
               </li>
             ))}
           </ul>
-        )}
-      </div>
+        </>
+      )}
     </div>
   );
 });

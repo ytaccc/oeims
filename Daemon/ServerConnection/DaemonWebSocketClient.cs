@@ -12,7 +12,7 @@ internal sealed class DaemonWebSocketClient(
     private ClientWebSocket? _ws;
     private readonly SemaphoreSlim _sendLock = new(1, 1);
     private readonly Uri _uri = new(
-        $"{config.BaseUrl.TrimEnd('/').Replace("http://", "ws://").Replace("https://", "wss://")}/ws/daemon/{config.ParticipantId}");
+        $"{config.BaseUrl.TrimEnd('/').Replace("http://", "ws://").Replace("https://", "wss://")}/ws/daemon/{config.ParticipantId}?token={Uri.EscapeDataString(config.Token)}");
 
     public async Task RunAsync(CancellationToken ct)
     {

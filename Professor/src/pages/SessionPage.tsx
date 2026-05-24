@@ -55,6 +55,23 @@ export function SessionPage() {
     return () => clearInterval(interval);
   }, [id, token, session?.status]);
 
+  // Poll events as fallback — WebSocket should deliver these in real-time but
+  // this catches any that are missed (e.g. while the WS connection is not yet open).
+  useEffect(() => {
+    if (!id || !session || session.status === 'ENDED') return;
+    const interval = setInterval(async () => {
+      try {
+        const evs = await getEvents(token, id);
+        const grouped: Record<string, EventResponse[]> = {};
+        for (const ev of evs) {
+          (grouped[ev.participantId] ??= []).push(ev);
+        }
+        setEventsByParticipant(grouped);
+      } catch { /* ignore */ }
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [id, token, session?.status]);
+
   const wsSessionId = session?.status === 'ACTIVE' ? (id ?? null) : null;
 
   useSessionWs(wsSessionId, token, {
