@@ -20,21 +20,21 @@ class AuthService(
     private val jwtConfig: JwtConfig
 ) {
 
-    suspend fun register(email: Email, password: Password, role: String): AuthResponse {
+    suspend fun register(email: Email, password: Password, role: UserRole): AuthResponse {
         if (userRepository.existsByEmail(email.address))
             throw ConflictException("Email already registered")
 
-        val userRole = runCatching { UserRole.valueOf(role.uppercase()) }
+        val userRole = runCatching { UserRole.valueOf(role.name.uppercase()) }
             .getOrElse { throw ValidationException("Invalid role: $role") }
 
         val hash = BCrypt.hashpw(password.value, BCrypt.gensalt())
         val user = userRepository.create(email.address, userRole, hash)
 
         return AuthResponse(
-            token  = issueToken(user.id.toUserId(), user.role.name),
+            token = issueToken(user.id.toUserId(), user.role),
             userId = user.id.toString(),
-            email  = user.email,
-            role   = user.role.name
+            email = user.email,
+            role = user.role
         )
     }
 
@@ -46,19 +46,19 @@ class AuthService(
             throw UnauthorizedException("Invalid credentials")
 
         return AuthResponse(
-            token  = issueToken(user.id.toUserId(), user.role.name),
+            token = issueToken(user.id.toUserId(), user.role),
             userId = user.id.toString(),
-            email  = user.email,
-            role   = user.role.name
+            email = user.email,
+            role = user.role
         )
     }
 
-    private fun issueToken(userId: UserId, role: String): String =
+    private fun issueToken(userId: UserId, role: UserRole): String =
         JWT.create()
             .withIssuer(jwtConfig.issuer)
             .withAudience(jwtConfig.audience)
             .withClaim("userId", userId.value.toString())
-            .withClaim("role", role)
+            .withClaim("role", role.name)
             .withExpiresAt(Date(System.currentTimeMillis() + jwtConfig.expirationMs))
             .sign(Algorithm.HMAC256(jwtConfig.secret))
 }
