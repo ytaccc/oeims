@@ -47,7 +47,7 @@ internal sealed class ProcessMonitor(IProcessSource processSource) : IMonitor
     /// Starts process monitoring until cancellation.
     /// </summary>
     /// <param name="onEvent">
-    /// Callback that receives events for successful and failed kill attempts.
+    /// Callback that receives warnings for successful and failed kills attempts.
     /// </param>
     /// <param name="ct">
     /// Cancellation token used by the Service to stop the monitor.
@@ -196,7 +196,7 @@ internal sealed class ProcessMonitor(IProcessSource processSource) : IMonitor
     /// <param name="processName">Process name shown in the message.</param>
     /// <param name="count">Number of process instances represented by the message.</param>
     /// <param name="errorMessage">Optional failure reason.</param>
-    /// <returns>A critical monitor event describing a forbidden process integrity offense.</returns>
+    /// <returns>A warning monitor event describing the kill result.</returns>
     private MonitorEvent CreateMonitorEvent(
         ProcessEvent eventType,
         string processName,
@@ -213,7 +213,7 @@ internal sealed class ProcessMonitor(IProcessSource processSource) : IMonitor
                 new MonitorEvent(
                     Name,
                     $"Forbidden process killed: {processDescription}",
-                    Severity.Critical),
+                    Severity.Warning),
 
             ProcessEvent.ForbiddenProcessKillFailed =>
                 new MonitorEvent(
@@ -221,7 +221,7 @@ internal sealed class ProcessMonitor(IProcessSource processSource) : IMonitor
                     string.IsNullOrWhiteSpace(errorMessage)
                         ? $"Failed to kill forbidden process: {processDescription}"
                         : $"Failed to kill forbidden process: {processDescription} ({errorMessage})",
-                    Severity.Critical),
+                    Severity.Warning),
 
             _ =>
                 new MonitorEvent(

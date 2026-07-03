@@ -7,7 +7,7 @@ import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.transactions.transaction
 
 fun Application.configureDatabase() {
-    val dbPath = System.getenv("DATABASE_PATH") ?: environment.config.property("database.path").getString()
+    val dbPath = environment.config.property("database.path").getString()
 
     Database.connect(
         url = "jdbc:sqlite:$dbPath",

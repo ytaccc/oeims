@@ -185,7 +185,7 @@ internal sealed class NetworkMonitor : IMonitor
                     Event: new MonitorEvent(
                         Name,
                         $"Network disconnected: no active network interface. Baseline was: {baselineInterfaces}.",
-                        Severity.Critical)),
+                        Severity.Warning)),
 
             _ when HasNoPhysicalInterface(currentState) =>
                 new NetworkViolation(
@@ -193,7 +193,7 @@ internal sealed class NetworkMonitor : IMonitor
                     Event: new MonitorEvent(
                         Name,
                         $"Invalid network state: active interfaces exist, but none are physical. Active interfaces: {activeInterfaces}. Baseline was: {baselineInterfaces}.",
-                        Severity.Critical)),
+                        Severity.Warning)),
 
             _ when HasMultipleActiveInterfaces(currentState) =>
                 new NetworkViolation(
@@ -201,7 +201,7 @@ internal sealed class NetworkMonitor : IMonitor
                     Event: new MonitorEvent(
                         Name,
                         $"Multiple or suspicious active interfaces detected: {activeInterfaces}. Only one physical interface is allowed. Baseline was: {baselineInterfaces}.",
-                        Severity.Critical)),
+                        Severity.Warning)),
 
             _ when HasInterfaceChanged(_baseline, currentState) =>
                 new NetworkViolation(

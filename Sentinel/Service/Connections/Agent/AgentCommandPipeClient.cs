@@ -61,12 +61,13 @@ internal sealed class AgentCommandPipeClient(
         {
             throw;
         }
-        catch (TimeoutException ex)
+        catch (TimeoutException)
         {
-            logger.LogDebug(ex, "Agent unavailable; command not sent: {CommandType}", command.Type);
+            logger.LogWarning("Agent unavailable; command not sent: {CommandType}", command.Type);
         }
         catch (IOException ex)
         {
+            logger.LogWarning("Agent command pipe disconnected.");
             logger.LogDebug(ex, "Agent command pipe write failed.");
         }
         finally

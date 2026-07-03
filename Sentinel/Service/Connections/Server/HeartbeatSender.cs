@@ -24,7 +24,7 @@ internal sealed class HeartbeatSender(
 
     public async Task StartAsync(CancellationToken ct)
     {
-        logger.LogDebug("[Heartbeat] Waiting for Sentinel authorization");
+        logger.LogInformation("[Heartbeat] Waiting for Sentinel authorization");
 
         while (!ct.IsCancellationRequested)
         {

@@ -70,7 +70,7 @@ internal sealed class AgentCommandPipeServer(
             }
             catch (JsonException ex)
             {
-                logger.LogDebug(ex, "Ignored malformed Agent command.");
+                logger.LogWarning(ex, "Ignored malformed Agent command.");
             }
         }
     }
@@ -105,7 +105,7 @@ internal sealed class AgentCommandPipeServer(
 
         if (command is null || string.IsNullOrWhiteSpace(command.Code))
         {
-            logger.LogDebug("Ignored empty exam identity code command.");
+            logger.LogWarning("Ignored empty exam identity code command.");
             return;
         }
 

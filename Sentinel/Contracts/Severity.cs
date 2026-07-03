@@ -16,7 +16,7 @@ namespace Contracts
         Warning,
 
         /// <summary>
-        /// Integrity offense where the exam cannot continue safely and the incident invalidates the exam flow.
+        /// Serious integrity offenses where the exam cannot be continued safely and might require exam invalidation.
         /// </summary>
         Critical
     }
