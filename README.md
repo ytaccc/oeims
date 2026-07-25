@@ -58,7 +58,19 @@ The complete local presentation setup currently targets Windows. Before starting
 [Docker Desktop](https://www.docker.com/products/docker-desktop/) and install the
 [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0).
 
-After cloning the repository, open PowerShell as Administrator and run:
+The server sends account and verification emails over SMTP and will not start without SMTP
+credentials. Before the first run, copy `.env.example` to `.env`:
+
+```powershell
+Copy-Item .env.example .env
+```
+
+Then edit `.env` and set `SMTP_HOST`, `SMTP_USERNAME`, and `SMTP_PASSWORD` to the values given by an
+SMTP provider of your choice. A sandbox email service intended for development is the simplest
+option, since production mail providers usually require additional account setup. Leave `JWT_SECRET`,
+`OEIMS_PORT`, and `FRONTEND_BASE_URL` as they are; the start script fills them in automatically.
+
+After cloning the repository and preparing `.env`, open PowerShell as Administrator and run:
 
 ```powershell
 .\scripts\bootstrap.ps1
@@ -73,6 +85,12 @@ The bootstrap script:
 5. Writes machine configuration under `C:\ProgramData\OEIMS\Sentinel`;
 6. Registers the `oeims` Windows Service and the Agent logon task;
 7. Starts Sentinel and opens the professor console.
+
+When the console opens, sign in with the professor account that the start script creates
+automatically:
+
+* **Email:** `professor@isel.pt`
+* **Password:** `profpass123`
 
 To run only the server and frontend on the same machine:
 
@@ -99,8 +117,9 @@ To stop the web platform or remove Sentinel:
 .\scripts\uninstall-sentinel.ps1
 ```
 
-The uninstall script keeps machine configuration and authorization data by default. Pass `-RemoveData` when that data
-must also be deleted.
+The uninstall script keeps Sentinel machine configuration and authorization data by default; pass `-RemoveData` to
+delete it as well. Passing `-RemoveData` to `stop-oeims.ps1` is a separate action: it removes the server's database
+volume, so the stored exams, sessions, and accounts are lost.
 
 ### Wiki
 
@@ -114,7 +133,7 @@ repository when the final version is delivered.
 
 ### Additional Documentation
 
-The main source folders contain the implementation and code-level documentation for the
+The main source folders contain the implementation of the
 [server](Server), [frontend](Frontend), and [Sentinel](Sentinel). The local deployment scripts are available in the
 [scripts](scripts) folder.
 
@@ -132,7 +151,7 @@ The main source folders contain the implementation and code-level documentation 
 * **Privacy-Conscious Events**: Sentinel sends structured metadata instead of screen recordings, file contents, or
   keystrokes;
 * **Centralized Local Bootstrap**: The complete presentation environment can be built, installed, and started directly
-  from the repository with one PowerShell script.
+  from the repository with a single bootstrap script, after a one-time SMTP configuration.
 
 ---
 
