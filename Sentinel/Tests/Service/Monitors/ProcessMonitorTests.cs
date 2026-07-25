@@ -36,7 +36,7 @@ public sealed class ProcessMonitorTests
         var monitorEvent = Assert.Single(events);
         Assert.Equal(nameof(ProcessMonitor), monitorEvent.MonitorName);
         Assert.Equal("Forbidden process killed: Slack (2 instances)", monitorEvent.Message);
-        Assert.Equal(Severity.Warning, monitorEvent.Severity);
+        Assert.Equal(Severity.Critical, monitorEvent.Severity);
     }
 
     [Fact(DisplayName = "Started processes that are not forbidden are ignored")]
@@ -93,7 +93,7 @@ public sealed class ProcessMonitorTests
 
         var monitorEvent = Assert.Single(events);
         Assert.Equal("Forbidden process killed: Slack", monitorEvent.Message);
-        Assert.Equal(Severity.Warning, monitorEvent.Severity);
+        Assert.Equal(Severity.Critical, monitorEvent.Severity);
     }
 
     [Fact(DisplayName = "Kill source failures are reported without crashing the monitor")]
@@ -117,7 +117,7 @@ public sealed class ProcessMonitorTests
 
         var monitorEvent = Assert.Single(events);
         Assert.Equal("Failed to kill forbidden process: slack (boom)", monitorEvent.Message);
-        Assert.Equal(Severity.Warning, monitorEvent.Severity);
+        Assert.Equal(Severity.Critical, monitorEvent.Severity);
     }
 
     [Fact(DisplayName = "Failed kill results are grouped by process and error")]
