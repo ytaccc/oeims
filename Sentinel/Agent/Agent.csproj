@@ -10,6 +10,9 @@
     <UserSecretsId>dotnet-Agent-9ea3bc6e-d2d0-41d2-bada-aa06bf006f03</UserSecretsId>
     <UseWindowsForms>true</UseWindowsForms>
     <RootNamespace>OEIMS.Sentinel.Agent</RootNamespace>
+    
+	<!-- Required for LibraryImportAttribute -->
+	<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <ItemGroup>
