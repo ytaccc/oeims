@@ -208,10 +208,10 @@ try {
         -Force | Out-Null
 
     Start-Service -Name $ServiceName
+    Start-ScheduledTask -TaskName $TaskName
 
     Write-Host ""
-    Write-Host "Sentinel installed. The Service is running and the Agent is ready to start." -ForegroundColor Green
-    Write-Host "Start the Agent with: Start-ScheduledTask -TaskName '$TaskName'"
+    Write-Host "Sentinel installed and started." -ForegroundColor Green
     Write-Host "Service: $serviceExecutable"
     Write-Host "Agent:   $agentExecutable"
     Write-Host "Config:  $configPath"
