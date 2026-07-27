@@ -151,14 +151,6 @@ This software uses the following open source packages and platforms:
 
 ---
 
-## Related
-
-* [Safe Exam Browser](https://safeexambrowser.org/) - A lockdown-oriented browser for controlled exam environments;
-* [Moodle Quiz](https://docs.moodle.org/en/Quiz_activity) - An online assessment activity provided by Moodle;
-* [Open edX](https://openedx.org/) - An open-source platform for online learning and assessment.
-
----
-
 ## Developers
 
 * [Miguel Sanches](https://github.com/sancheslfl)
