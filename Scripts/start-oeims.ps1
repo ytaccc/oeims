@@ -154,34 +154,36 @@ if (-not $ready) {
     throw "OEIMS containers started, but the API was not ready after two minutes. Run 'docker compose logs' from the repository root."
 }
 
-$professor = @{
-    email = "professor@isel.pt"
-    password = "profpass123"
-    role = "PROFESSOR"
-} | ConvertTo-Json
-
-try {
-    Invoke-RestMethod `
-        -Uri "$localUrl/api/auth/register" `
-        -Method Post `
-        -ContentType "application/json" `
-        -Body $professor | Out-Null
-}
-catch {
-    if (-not $_.Exception.Response -or [int]$_.Exception.Response.StatusCode -ne 409) {
-        throw
-    }
-
-    $login = @{
-        email = "professor@isel.pt"
+foreach ($email in @("professor@isel.pt", "professor2@isel.pt")) {
+    $professor = @{
+        email = $email
         password = "profpass123"
+        role = "PROFESSOR"
     } | ConvertTo-Json
 
-    Invoke-RestMethod `
-        -Uri "$localUrl/api/auth/login" `
-        -Method Post `
-        -ContentType "application/json" `
-        -Body $login | Out-Null
+    try {
+        Invoke-RestMethod `
+            -Uri "$localUrl/api/auth/register" `
+            -Method Post `
+            -ContentType "application/json" `
+            -Body $professor | Out-Null
+    }
+    catch {
+        if (-not $_.Exception.Response -or [int]$_.Exception.Response.StatusCode -ne 409) {
+            throw
+        }
+
+        $login = @{
+            email = $email
+            password = "profpass123"
+        } | ConvertTo-Json
+
+        Invoke-RestMethod `
+            -Uri "$localUrl/api/auth/login" `
+            -Method Post `
+            -ContentType "application/json" `
+            -Body $login | Out-Null
+    }
 }
 
 $lanAddress = Get-LanAddress

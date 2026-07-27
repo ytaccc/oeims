@@ -4,6 +4,7 @@ using System.Text.Json.Serialization;
 using Contracts.Ipc;
 using Microsoft.Extensions.Logging;
 using OEIMS.Sentinel.Agent.Domain;
+using OEIMS.Sentinel.Agent.Mitigators;
 
 namespace OEIMS.Sentinel.Agent.Ipc;
 
@@ -18,9 +19,11 @@ namespace OEIMS.Sentinel.Agent.Ipc;
 /// </para>
 /// </remarks>
 /// <param name="overlay">UI boundary used when the Service asks the Agent to display an exam identity code.</param>
+/// <param name="clipboardBlocker">Clipboard mitigation enabled after the student completes verification.</param>
 /// <param name="logger">Logger used for malformed commands and pipe diagnostics.</param>
 internal sealed class AgentCommandPipeServer(
     IExamIdentityCodeOverlay overlay,
+    ClipboardBlocker clipboardBlocker,
     ILogger<AgentCommandPipeServer> logger)
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
@@ -109,6 +112,7 @@ internal sealed class AgentCommandPipeServer(
             return;
         }
 
+        clipboardBlocker.Apply();
         await overlay.DisplayCodeAsync(command.Code, ct);
     }
 }
