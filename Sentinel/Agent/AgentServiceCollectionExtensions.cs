@@ -20,7 +20,7 @@ public static class AgentServiceCollectionExtensions
         services.AddSingleton<AgentCommandPipeServer>();
 
         services.AddSingleton<IMonitor, FocusMonitor>();
-        services.AddSingleton<IMitigator, ClipboardBlocker>();
+        services.AddSingleton<ClipboardBlocker>();
 
         services.AddHostedService<Worker>();
 

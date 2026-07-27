@@ -193,7 +193,7 @@ try {
     $principal = New-ScheduledTaskPrincipal `
         -UserId $currentUser `
         -LogonType Interactive `
-        -RunLevel Limited
+        -RunLevel Highest
     $settings = New-ScheduledTaskSettingsSet `
         -AllowStartIfOnBatteries `
         -DontStopIfGoingOnBatteries `

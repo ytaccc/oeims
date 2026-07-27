@@ -3,8 +3,6 @@ param(
     [ValidateRange(1, 65535)]
     [int]$Port = 5173,
 
-    [string]$PublicUrl,
-
     [switch]$NoBrowser
 )
 
@@ -26,31 +24,6 @@ function New-RandomSecret {
     finally {
         $generator.Dispose()
     }
-}
-
-function Get-LanAddress {
-    if (-not (Get-Command Get-NetRoute -ErrorAction SilentlyContinue)) {
-        return $null
-    }
-
-    $route = Get-NetRoute `
-        -AddressFamily IPv4 `
-        -DestinationPrefix "0.0.0.0/0" `
-        -ErrorAction SilentlyContinue |
-        Sort-Object RouteMetric |
-        Select-Object -First 1
-
-    if (-not $route) {
-        return $null
-    }
-
-    return Get-NetIPAddress `
-        -AddressFamily IPv4 `
-        -InterfaceIndex $route.InterfaceIndex `
-        -AddressState Preferred `
-        -ErrorAction SilentlyContinue |
-        Where-Object { $_.IPAddress -notlike "169.254.*" } |
-        Select-Object -ExpandProperty IPAddress -First 1
 }
 
 if (-not (Test-Path $composeFile)) {
@@ -79,25 +52,10 @@ elseif (-not (Select-String -LiteralPath $envFile -Pattern '^JWT_SECRET=.+$' -Qu
         -Encoding Ascii
 }
 
-if ([string]::IsNullOrWhiteSpace($PublicUrl)) {
-    $PublicUrl = $localUrl
-}
-
-$publicUri = $null
-if (-not [Uri]::TryCreate($PublicUrl, [UriKind]::Absolute, [ref]$publicUri)) {
-    throw "PublicUrl must be an absolute HTTP or HTTPS URL."
-}
-
-if ($publicUri.Scheme -notin @("http", "https")) {
-    throw "PublicUrl must use HTTP or HTTPS."
-}
-
-$PublicUrl = $publicUri.GetLeftPart([UriPartial]::Authority).TrimEnd("/")
-
 $previousPort = $env:OEIMS_PORT
-$previousPublicUrl = $env:FRONTEND_BASE_URL
+$previousFrontendBaseUrl = $env:FRONTEND_BASE_URL
 $env:OEIMS_PORT = $Port.ToString()
-$env:FRONTEND_BASE_URL = $PublicUrl
+$env:FRONTEND_BASE_URL = $localUrl
 
 Push-Location $repoRoot
 try {
@@ -117,11 +75,11 @@ finally {
         $env:OEIMS_PORT = $previousPort
     }
 
-    if ($null -eq $previousPublicUrl) {
+    if ($null -eq $previousFrontendBaseUrl) {
         Remove-Item Env:\FRONTEND_BASE_URL -ErrorAction SilentlyContinue
     }
     else {
-        $env:FRONTEND_BASE_URL = $previousPublicUrl
+        $env:FRONTEND_BASE_URL = $previousFrontendBaseUrl
     }
 }
 
@@ -154,46 +112,41 @@ if (-not $ready) {
     throw "OEIMS containers started, but the API was not ready after two minutes. Run 'docker compose logs' from the repository root."
 }
 
-$professor = @{
-    email = "professor@isel.pt"
-    password = "profpass123"
-    role = "PROFESSOR"
-} | ConvertTo-Json
-
-try {
-    Invoke-RestMethod `
-        -Uri "$localUrl/api/auth/register" `
-        -Method Post `
-        -ContentType "application/json" `
-        -Body $professor | Out-Null
-}
-catch {
-    if (-not $_.Exception.Response -or [int]$_.Exception.Response.StatusCode -ne 409) {
-        throw
-    }
-
-    $login = @{
-        email = "professor@isel.pt"
+foreach ($email in @("professor@isel.pt", "professor2@isel.pt")) {
+    $professor = @{
+        email = $email
         password = "profpass123"
+        role = "PROFESSOR"
     } | ConvertTo-Json
 
-    Invoke-RestMethod `
-        -Uri "$localUrl/api/auth/login" `
-        -Method Post `
-        -ContentType "application/json" `
-        -Body $login | Out-Null
-}
+    try {
+        Invoke-RestMethod `
+            -Uri "$localUrl/api/auth/register" `
+            -Method Post `
+            -ContentType "application/json" `
+            -Body $professor | Out-Null
+    }
+    catch {
+        if (-not $_.Exception.Response -or [int]$_.Exception.Response.StatusCode -ne 409) {
+            throw
+        }
 
-$lanAddress = Get-LanAddress
+        $login = @{
+            email = $email
+            password = "profpass123"
+        } | ConvertTo-Json
+
+        Invoke-RestMethod `
+            -Uri "$localUrl/api/auth/login" `
+            -Method Post `
+            -ContentType "application/json" `
+            -Body $login | Out-Null
+    }
+}
 
 Write-Host ""
 Write-Host "OEIMS is ready." -ForegroundColor Green
 Write-Host "Professor console: $localUrl"
-Write-Host "Public URL:       $PublicUrl"
-
-if ($lanAddress -and $PublicUrl -eq $localUrl) {
-    Write-Host "Remote students require restarting with -PublicUrl http://${lanAddress}:$Port"
-}
 
 if (-not $NoBrowser) {
     Start-Process $localUrl

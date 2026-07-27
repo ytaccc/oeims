@@ -26,7 +26,6 @@ internal static class ServiceCollectionExtensions
                 options.ServiceName = "oeims";
             });
 
-            services.AddSingleton<SingleInstanceGuard>();
             builder.Logging.AddEventLog();
         }
 
@@ -59,8 +58,6 @@ internal static class ServiceCollectionExtensions
     internal static WebApplication UseExamMonitoringService(
         this WebApplication app)
     {
-        if (app.Environment.IsProduction() && OperatingSystem.IsWindows())
-            app.Services.GetRequiredService<SingleInstanceGuard>();
 
         app.UseCors();
         app.MapLoopbackApi();
