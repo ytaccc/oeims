@@ -91,18 +91,6 @@ To run only the server and frontend on the same machine:
 .\Scripts\start-oeims.ps1
 ```
 
-For a classroom setup, start the platform with the address that student browsers can reach:
-
-```powershell
-.\Scripts\start-oeims.ps1 -PublicUrl "http://<teacher-address>:5173"
-```
-
-Then install Sentinel on each student machine using that same address:
-
-```powershell
-.\Scripts\install-sentinel.ps1 -ServerUrl "http://<teacher-address>:5173"
-```
-
 To stop the web platform or remove Sentinel:
 
 ```powershell
