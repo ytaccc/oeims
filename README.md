@@ -73,18 +73,18 @@ option, since production mail providers usually require additional account setup
 After cloning the repository and preparing `.env`, open PowerShell as Administrator and run:
 
 ```powershell
-.\scripts\bootstrap.ps1
+.\Scripts\bootstrap.ps1
 ```
 
-The bootstrap script:
+The bootstrap script starts the web platform, installs Sentinel, starts the Windows Service, registers the Agent logon
+task, and opens the professor console. It deliberately leaves the Agent stopped so the session and verification links
+can be copied during the demonstration.
 
-1. Generates a local JWT secret when one does not exist;
-2. Builds and starts the server and frontend with Docker Compose;
-3. Publishes the Sentinel Service and Agent for the current Windows machine;
-4. Installs the Service under `C:\Program Files\OEIMS\Sentinel`;
-5. Writes machine configuration under `C:\ProgramData\OEIMS\Sentinel`;
-6. Registers the `oeims` Windows Service and the Agent logon task;
-7. Starts Sentinel and opens the professor console.
+Start the Agent after copying the links:
+
+```powershell
+Start-ScheduledTask -TaskName "OEIMS Sentinel Agent"
+```
 
 When the console opens, sign in with the professor account that the start script creates
 automatically:
@@ -95,26 +95,26 @@ automatically:
 To run only the server and frontend on the same machine:
 
 ```powershell
-.\scripts\start-oeims.ps1
+.\Scripts\start-oeims.ps1
 ```
 
 For a classroom setup, start the platform with the address that student browsers can reach:
 
 ```powershell
-.\scripts\start-oeims.ps1 -PublicUrl "http://<teacher-address>:5173"
+.\Scripts\start-oeims.ps1 -PublicUrl "http://<teacher-address>:5173"
 ```
 
 Then install Sentinel on each student machine using that same address:
 
 ```powershell
-.\scripts\install-sentinel.ps1 -ServerUrl "http://<teacher-address>:5173"
+.\Scripts\install-sentinel.ps1 -ServerUrl "http://<teacher-address>:5173"
 ```
 
 To stop the web platform or remove Sentinel:
 
 ```powershell
-.\scripts\stop-oeims.ps1
-.\scripts\uninstall-sentinel.ps1
+.\Scripts\stop-oeims.ps1
+.\Scripts\uninstall-sentinel.ps1
 ```
 
 The uninstall script keeps Sentinel machine configuration and authorization data by default; pass `-RemoveData` to
@@ -135,7 +135,7 @@ repository when the final version is delivered.
 
 The main source folders contain the implementation of the
 [server](Server), [frontend](Frontend), and [Sentinel](Sentinel). The local deployment scripts are available in the
-[scripts](scripts) folder.
+[Scripts](Scripts) folder.
 
 ---
 
