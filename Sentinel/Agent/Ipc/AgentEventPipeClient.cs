@@ -63,6 +63,13 @@ internal sealed class AgentEventPipeClient(
             await _writer!.WriteLineAsync(json);
             await _writer.FlushAsync(ct);
         }
+        catch (UnauthorizedAccessException)
+        {
+            logger.LogError(
+                "Access denied to the Sentinel Service pipe. Run the Sentinel Agent as administrator.");
+
+            DisposeConnection();
+        }
         catch (IOException)
         {
             logger.LogDebug("Agent pipe disconnected.");
