@@ -22,5 +22,5 @@ $localUrl = "http://localhost:$Port"
 Start-Process $localUrl
 
 Write-Host ""
-Write-Host "OEIMS is running. The Sentinel Agent was not started so demonstration links can be copied." -ForegroundColor Green
-Write-Host "Start it when ready with: Start-ScheduledTask -TaskName 'OEIMS Sentinel Agent'"
+Write-Host "The complete local OEIMS system is running." -ForegroundColor Green
+Write-Host "Open: $localUrl"
