@@ -38,8 +38,8 @@ OEIMS is an online exam integrity monitoring system developed in the context of 
 BSc in Computer and Software Engineering at the Instituto Superior de Engenharia de Lisboa.
 
 The system combines a web platform for professors and students, a central server, and a Windows Sentinel installed on
-the student machine. Sentinel collects a limited set of operating-system signals and sends structured events to the
-professor console in real time.
+the student machine. Sentinel collects a limited set of operating system signals and sends structured events to the
+professor dashboard in real time.
 
 OEIMS focuses on **detection and reporting instead of lockdown**. Events such as focus loss, forbidden processes,
 network changes, or a missing heartbeat support the professor's judgment, but do not automatically prove academic
