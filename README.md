@@ -76,21 +76,14 @@ After cloning the repository and preparing `.env`, open PowerShell as Administra
 .\Scripts\bootstrap.ps1
 ```
 
-The bootstrap script starts the web platform, installs Sentinel, starts the Windows Service, registers the Agent logon
-task, and opens the professor console. It deliberately leaves the Agent stopped so the session and verification links
-can be copied during the demonstration.
+The bootstrap script starts the web platform, installs and starts Sentinel, and opens the professor console. The Agent
+starts immediately, but clipboard blocking begins only after the student completes verification and receives the exam
+identity code.
 
-Start the Agent after copying the links:
+When the console opens, sign in with either professor account created automatically:
 
-```powershell
-Start-ScheduledTask -TaskName "OEIMS Sentinel Agent"
-```
-
-When the console opens, sign in with the professor account that the start script creates
-automatically:
-
-* **Email:** `professor@isel.pt`
-* **Password:** `profpass123`
+* `professor@isel.pt` / `profpass123`
+* `professor2@isel.pt` / `profpass123`
 
 To run only the server and frontend on the same machine:
 
