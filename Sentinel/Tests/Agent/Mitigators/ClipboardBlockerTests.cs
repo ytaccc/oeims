@@ -26,6 +26,18 @@ public sealed class ClipboardBlockerTests
         Assert.Equal(0, source.UnblockCalls);
     }
 
+    [Fact(DisplayName = "Applying the clipboard blocker twice blocks only once")]
+    public void ApplyingTheClipboardBlockerTwiceBlocksOnlyOnce()
+    {
+        var source = new FakeClipboardSource();
+        using var blocker = new ClipboardBlocker(source);
+
+        blocker.Apply();
+        blocker.Apply();
+
+        Assert.Equal(1, source.BlockCalls);
+    }
+
     [Fact(DisplayName = "Disposing the clipboard blocker unblocks the clipboard source")]
     public void DisposingTheClipboardBlockerUnblocksTheClipboardSource()
     {
